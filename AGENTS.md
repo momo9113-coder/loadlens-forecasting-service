@@ -24,12 +24,13 @@ This repository is the end-to-end applied-product project in a three-repository 
 - Live app: `https://loadlens-forecasting-service-xx64wapp6mrljcncsedvaah.streamlit.app/`
 - Default branch: `main`
 - Dataset: UCI Power Consumption of Tetouan City, 52,416 normalized rows.
-- First dated holdout result: model RMSE 371.24 versus persistence RMSE 550.07.
-- Empirical p90 absolute-residual band: width 532.78, holdout coverage 89.995%.
-- Local tests: 5 passing as of 2026-07-15.
+- Primary rolling-origin result: pooled RMSE 456.17 versus persistence RMSE 612.91 across 26,136 test rows; 25.57% lower RMSE and four wins in five folds.
+- Independently calibrated empirical bands covered 89.08% in aggregate; fold 1 under-covered at 76.43% and lost to persistence by 5.96% RMSE.
+- Final dated holdout: model RMSE 371.24 versus persistence RMSE 550.07; calibrated p90 half-width 518.21 and 89.53% untouched-holdout coverage.
+- Local tests: 7 passing as of 2026-07-15.
 - GitHub Actions `tests`: passing on the current public `main` branch.
 
-Treat these as first-run evidence, not final or production claims. The current evaluation is one chronological holdout, not a complete rolling-origin study.
+Treat these as application evidence, not production claims. Read `docs/BACKTEST.md` before quoting a metric; do not omit the losing first fold when discussing stability.
 
 ## Architecture
 
@@ -57,7 +58,7 @@ Run commands from the repository root.
 .\.venv\Scripts\python.exe -m streamlit run app/streamlit_app.py
 ```
 
-If `.venv` does not exist, create it and install `.[dev]`. Python 3.12 is used in CI; the existing Windows development environment was created with Python 3.14.3.
+If `.venv` does not exist, create it and install `requirements-dev.txt`. Python 3.12 is used in CI; the existing Windows development environment was created with Python 3.14.3.
 
 ## Data And Secrets
 
@@ -77,8 +78,8 @@ If `.venv` does not exist, create it and install `.[dev]`. Python 3.12 is used i
 
 ## Next Priorities
 
-1. Replace the single holdout with rolling-origin evaluation and record fold-level metrics.
-2. Pin or lock deployment dependencies so future package upgrades cannot silently break the app.
-3. Add a real screenshot or short GIF to the README as a fallback for Streamlit hibernation.
-4. Improve interval calibration and document coverage by forecast horizon.
+1. Validate recursive forecasts by horizon rather than extrapolating one-step results.
+2. Investigate fold 1 regime sensitivity and horizon-specific interval calibration.
+3. Re-verify the pinned environment when upgrading Python or direct dependencies.
+4. Keep the README screenshot synchronized after material UI changes.
 5. Tag an application-ready release only after the above evidence is stable.

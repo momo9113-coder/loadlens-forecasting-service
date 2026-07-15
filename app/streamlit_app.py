@@ -50,7 +50,7 @@ forecast = model.forecast(history, horizon)
 left, right = st.columns(2)
 with left:
     st.subheader("Forecast")
-    st.dataframe(forecast, use_container_width=True, hide_index=True)
+    st.dataframe(forecast, width="stretch", hide_index=True)
 with right:
     st.subheader("Holdout metrics")
     st.json(model.metrics)

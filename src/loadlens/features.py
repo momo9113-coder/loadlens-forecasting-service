@@ -43,7 +43,10 @@ def add_calendar_features(frame: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def make_supervised(frame: pd.DataFrame, config: FeatureConfig = FeatureConfig()) -> tuple[pd.DataFrame, pd.Series]:
+def _make_supervised_table(
+    frame: pd.DataFrame,
+    config: FeatureConfig,
+) -> tuple[pd.DataFrame, list[str]]:
     result = add_calendar_features(_base_frame(frame))
     feature_columns: list[str] = []
     for lag in config.lags:
@@ -71,8 +74,22 @@ def make_supervised(frame: pd.DataFrame, config: FeatureConfig = FeatureConfig()
     ]
     feature_columns.extend(observed_columns)
     result["target"] = result["load"].shift(-config.horizon_steps)
-    usable = result.dropna(subset=feature_columns + ["target"]).reset_index(drop=True)
+    result["target_timestamp"] = result["timestamp"].shift(-config.horizon_steps)
+    usable = result.dropna(subset=feature_columns + ["target", "target_timestamp"]).reset_index(drop=True)
+    return usable, feature_columns
+
+
+def make_supervised(frame: pd.DataFrame, config: FeatureConfig = FeatureConfig()) -> tuple[pd.DataFrame, pd.Series]:
+    usable, feature_columns = _make_supervised_table(frame, config)
     return usable[feature_columns], usable["target"]
+
+
+def make_supervised_with_timestamps(
+    frame: pd.DataFrame,
+    config: FeatureConfig = FeatureConfig(),
+) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
+    usable, feature_columns = _make_supervised_table(frame, config)
+    return usable[feature_columns], usable["target"], usable["target_timestamp"]
 
 
 def build_feature_row(history: pd.DataFrame, config: FeatureConfig = FeatureConfig()) -> pd.DataFrame:

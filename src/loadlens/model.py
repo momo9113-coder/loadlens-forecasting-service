@@ -15,6 +15,40 @@ from .data import DEFAULT_DATA_DIR, download_and_prepare, load_processed
 from .features import FeatureConfig, build_feature_row, make_supervised
 
 
+def make_estimator(random_state: int) -> HistGradientBoostingRegressor:
+    return HistGradientBoostingRegressor(
+        learning_rate=0.05,
+        max_iter=180,
+        max_leaf_nodes=31,
+        l2_regularization=1.0,
+        random_state=random_state,
+    )
+
+
+def fit_with_calibration(
+    features: pd.DataFrame,
+    target: pd.Series,
+    calibration_fraction: float,
+    random_state: int,
+) -> tuple[HistGradientBoostingRegressor, float, int]:
+    if not 0 < calibration_fraction < 0.5:
+        raise ValueError("calibration_fraction must be between zero and 0.5")
+    calibration_start = int(len(features) * (1 - calibration_fraction))
+    if calibration_start < 100 or calibration_start >= len(features):
+        raise ValueError("calibration_fraction leaves too few training or calibration rows")
+
+    calibration_model = make_estimator(random_state)
+    calibration_model.fit(features.iloc[:calibration_start], target.iloc[:calibration_start])
+    calibration_predictions = calibration_model.predict(features.iloc[calibration_start:])
+    calibration_actual = target.iloc[calibration_start:].to_numpy()
+    interval_width = float(np.quantile(np.abs(calibration_actual - calibration_predictions), 0.9))
+
+    # Refit the point model on every observation available before the test origin.
+    estimator = make_estimator(random_state)
+    estimator.fit(features, target)
+    return estimator, interval_width, len(calibration_actual)
+
+
 @dataclass
 class ForecastModel:
     estimator: Any
@@ -29,6 +63,7 @@ class ForecastModel:
         frame: pd.DataFrame,
         config: FeatureConfig = FeatureConfig(),
         validation_fraction: float = 0.2,
+        calibration_fraction: float = 0.125,
         random_state: int = 20260715,
     ) -> "ForecastModel":
         features, target = make_supervised(frame, config)
@@ -37,20 +72,17 @@ class ForecastModel:
         split = int(len(features) * (1 - validation_fraction))
         if split <= 0 or split >= len(features):
             raise ValueError("validation_fraction leaves no train or validation rows")
-        estimator = HistGradientBoostingRegressor(
-            learning_rate=0.05,
-            max_iter=180,
-            max_leaf_nodes=31,
-            l2_regularization=1.0,
+        estimator, interval_width, calibration_rows = fit_with_calibration(
+            features.iloc[:split],
+            target.iloc[:split],
+            calibration_fraction=calibration_fraction,
             random_state=random_state,
         )
-        estimator.fit(features.iloc[:split], target.iloc[:split])
         predictions = estimator.predict(features.iloc[split:])
         actual = target.iloc[split:].to_numpy()
         persistence = features.iloc[split:]["load_lag_0"].to_numpy()
-        residuals = actual - predictions
-        interval_width = float(np.quantile(np.abs(residuals), 0.9))
         model_metrics = {
+            "calibration_rows": float(calibration_rows),
             "validation_rows": float(len(actual)),
             "validation_mae": float(mean_absolute_error(actual, predictions)),
             "validation_rmse": float(mean_squared_error(actual, predictions) ** 0.5),

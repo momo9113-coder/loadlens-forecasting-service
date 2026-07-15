@@ -13,4 +13,6 @@ def test_model_forecast_returns_interval() -> None:
     assert len(result) == 4
     assert np.all(result["lower"] <= result["forecast"])
     assert np.all(result["forecast"] <= result["upper"])
+    assert model.metrics["calibration_rows"] > 0
     assert model.metrics["validation_rows"] > 0
+    assert 0 <= model.metrics["interval_coverage"] <= 1

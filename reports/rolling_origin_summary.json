@@ -1,0 +1,23 @@
+{
+  "method": "expanding-window rolling-origin evaluation with a pre-test calibration block",
+  "feature_horizon_steps": 1,
+  "folds": 5,
+  "evaluated_rows": 26136,
+  "evaluation_start": "2017-07-02T12:00:00",
+  "evaluation_end": "2017-12-30T23:50:00",
+  "model_mae": 288.61979072646403,
+  "model_rmse": 456.168075527994,
+  "persistence_mae": 411.9915990748393,
+  "persistence_rmse": 612.9117392063179,
+  "rmse_improvement_pct": 25.57361095437608,
+  "fold_rmse_wins": 4,
+  "mean_interval_width_p90_abs_residual": 617.1731519660034,
+  "interval_coverage": 0.8908019589837771,
+  "config": {
+    "folds": 5,
+    "initial_train_fraction": 0.5,
+    "test_fraction": 0.1,
+    "calibration_fraction": 0.125,
+    "random_state": 20260715
+  }
+}

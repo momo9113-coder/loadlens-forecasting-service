@@ -42,7 +42,7 @@ class ForecastResponse(BaseModel):
 
 
 def create_app(model: ForecastModel | None | object = _LOAD_DEFAULT) -> FastAPI:
-    app = FastAPI(title="LoadLens Forecasting Service", version="0.1.0")
+    app = FastAPI(title="LoadLens Forecasting Service", version="1.0.0")
     loaded_model: ForecastModel | None = model if isinstance(model, ForecastModel) else None
     load_default = model is _LOAD_DEFAULT
     load_attempted = not load_default
