@@ -11,6 +11,9 @@ from pydantic import BaseModel, Field
 from .model import ForecastModel, load_model
 
 
+_LOAD_DEFAULT = object()
+
+
 class Observation(BaseModel):
     timestamp: datetime
     load: float
@@ -38,35 +41,48 @@ class ForecastResponse(BaseModel):
     metrics: dict[str, float]
 
 
-def create_app(model: ForecastModel | None = None) -> FastAPI:
+def create_app(model: ForecastModel | None | object = _LOAD_DEFAULT) -> FastAPI:
     app = FastAPI(title="LoadLens Forecasting Service", version="0.1.0")
-    loaded_model = model
-    if loaded_model is None:
+    loaded_model: ForecastModel | None = model if isinstance(model, ForecastModel) else None
+    load_default = model is _LOAD_DEFAULT
+    load_attempted = not load_default
+
+    def get_model() -> ForecastModel | None:
+        nonlocal loaded_model, load_attempted
+        if not load_attempted:
+            load_attempted = True
+            model_path = Path(os.getenv("LOADLENS_MODEL", "artifacts/model.joblib"))
+            if model_path.exists():
+                loaded_model = load_model(model_path)
+        return loaded_model
+
+    if load_default:
         model_path = Path(os.getenv("LOADLENS_MODEL", "artifacts/model.joblib"))
-        if model_path.exists():
-            loaded_model = load_model(model_path)
+        app.state.model_path = str(model_path)
 
     @app.get("/health")
     def health() -> dict[str, object]:
-        return {"status": "ok", "model_loaded": loaded_model is not None}
+        return {"status": "ok", "model_loaded": get_model() is not None}
 
     @app.get("/metrics")
     def metrics() -> dict[str, float]:
-        if loaded_model is None:
+        active_model = get_model()
+        if active_model is None:
             raise HTTPException(status_code=503, detail="Model artifact is not loaded")
-        return loaded_model.metrics
+        return active_model.metrics
 
     @app.post("/forecast", response_model=ForecastResponse)
     def forecast(request: ForecastRequest) -> ForecastResponse:
-        if loaded_model is None:
+        active_model = get_model()
+        if active_model is None:
             raise HTTPException(status_code=503, detail="Model artifact is not loaded")
         history = pd.DataFrame([observation.model_dump() for observation in request.history])
         try:
-            result = loaded_model.forecast(history, request.horizon)
+            result = active_model.forecast(history, request.horizon)
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         forecasts = [ForecastPoint(**row) for row in result.to_dict(orient="records")]
-        return ForecastResponse(forecasts=forecasts, metrics=loaded_model.metrics)
+        return ForecastResponse(forecasts=forecasts, metrics=active_model.metrics)
 
     return app
 
