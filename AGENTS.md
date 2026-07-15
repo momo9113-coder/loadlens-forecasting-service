@@ -22,6 +22,7 @@ This repository is the end-to-end applied-product project in a three-repository 
 
 - GitHub: `https://github.com/momo9113-coder/loadlens-forecasting-service`
 - Live app: `https://loadlens-forecasting-service-xx64wapp6mrljcncsedvaah.streamlit.app/`
+- Stable release: `https://github.com/momo9113-coder/loadlens-forecasting-service/releases/tag/v1.0.0`
 - Default branch: `main`
 - Dataset: UCI Power Consumption of Tetouan City, 52,416 normalized rows.
 - Primary rolling-origin result: pooled RMSE 456.17 versus persistence RMSE 612.91 across 26,136 test rows; 25.57% lower RMSE and four wins in five folds.
@@ -82,4 +83,4 @@ If `.venv` does not exist, create it and install `requirements-dev.txt`. Python 
 2. Investigate fold 1 regime sensitivity and horizon-specific interval calibration.
 3. Re-verify the pinned environment when upgrading Python or direct dependencies.
 4. Keep the README screenshot synchronized after material UI changes.
-5. Tag an application-ready release only after the above evidence is stable.
+5. Keep `v1.0.0` stable; create a new release only after a material, re-verified change.

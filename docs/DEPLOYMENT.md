@@ -20,7 +20,7 @@ The repository contains no cloud key.
 
 ## Deployment Behavior
 
-Pushing to `main` updates the source repository and runs CI. Streamlit Community Cloud watches the linked branch and redeploys the configured app. The deployment installs `requirements.txt`, which installs the local package and development extra.
+Pushing to `main` updates the source repository and runs CI. Streamlit Community Cloud watches the linked branch and redeploys the configured app. The deployment installs the local package and exact production pins from `requirements.txt`; test-only pins live in `requirements-dev.txt`.
 
 On a cold start, the app:
 
