@@ -6,11 +6,9 @@ The project is intentionally scoped to one target zone and a one-step recursive 
 
 ## Public demo
 
-The intended public entry point is Streamlit Community Cloud:
+[Open the live Streamlit demo](https://loadlens-forecasting-service-xx64wapp6mrljcncsedvaah.streamlit.app/).
 
-`https://<deployment-name>.streamlit.app`
-
-The URL will be added after the first public deployment. The application is stateless and may retrain on first start when no model artifact is present.
+The application is stateless and may retrain on first start when no model artifact is present. The free deployment can sleep after inactivity, so the first request may take longer than subsequent requests.
 
 ## Data
 
